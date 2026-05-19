@@ -20,7 +20,9 @@ import {
   HelpCircle as QuizIcon,
   Maximize2,
   Minimize2,
-  ArrowUp
+  ArrowUp,
+  X,
+  Send
 } from 'lucide-react';
 import './App.css';
 
@@ -36,7 +38,18 @@ function App() {
   const [quizScore, setQuizScore] = useState(0);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
+  // AI Assistant States
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [tempApiKey, setTempApiKey] = useState('');
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'model', text: 'Xin chào! Tôi là Trợ lý AI học tập chuyên về môn Chủ nghĩa xã hội khoa học. Hãy nhập API Key của bạn để tôi có thể hỗ trợ giải thích slide, tìm ví dụ thực tế hay đưa ra câu hỏi phản biện nhé.' }
+  ]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
   const totalSlides = 10;
+  const chatEndRef = useRef(null);
 
   const navItems = [
     { num: 1, label: "Trang bìa" },
@@ -98,6 +111,11 @@ function App() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // If typing in any input element, bypass keyboard navigation to prevent typing arrows triggering slides
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        return;
+      }
+
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         e.preventDefault();
         scrollToSection(activeSection + 1);
@@ -124,15 +142,13 @@ function App() {
   // Monitor scroll for active section highlight and progress bar
   useEffect(() => {
     const handleScroll = () => {
-      // Calculate reading progress
       const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       setScrollProgress(scrolled);
 
-      // Determine active section based on proximity
       const sections = navItems.map(item => document.getElementById(`slide-${item.num}`));
-      const scrollPosition = window.scrollY + 150; // offset for sticky header
+      const scrollPosition = window.scrollY + 150; 
 
       for (let i = 0; i < sections.length; i++) {
         const section = sections[i];
@@ -171,6 +187,105 @@ function App() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isAiLoading]);
+
+  // Save API key
+  const handleSaveApiKey = () => {
+    if (tempApiKey.trim()) {
+      localStorage.setItem('gemini_api_key', tempApiKey.trim());
+      setApiKey(tempApiKey.trim());
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'model', text: 'Lưu API Key thành công! Tôi đã sẵn sàng kết nối. Hãy đặt câu hỏi hoặc click vào một trong những gợi ý nhanh bên dưới.' }
+      ]);
+    }
+  };
+
+  // Clear API key
+  const handleClearApiKey = () => {
+    localStorage.removeItem('gemini_api_key');
+    setApiKey('');
+    setTempApiKey('');
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'model', text: 'Đã xóa API Key. Vui lòng nhập API Key mới để có thể tiếp tục sử dụng trợ lý AI.' }
+    ]);
+  };
+
+  // AI Context Provider based on Slide Number
+  const getActiveSlideContext = (num) => {
+    switch (num) {
+      case 1: return "Trang bìa: Chương 3: Chủ nghĩa xã hội và thời kỳ quá độ lên chủ nghĩa xã hội. I. Chủ nghĩa xã hội. 1. Chủ nghĩa xã hội, giai đoạn đầu của hình thái kinh tế - xã hội cộng sản chủ nghĩa.";
+      case 2: return "Mục tiêu chương: Kiến thức (nắm vững lý luận Mác - Lênin về CNXH, thời kỳ quá độ, sự vận dụng của ĐCSVN); Kỹ năng (phân tích vấn đề CNXH và con đường lên CNXH ở VN); Tư tưởng (niềm tin vào chế độ XHCN, ủng hộ đường lối đổi mới).";
+      case 3: return "Các góc độ tiếp cận CNXH: 1. Phong trào thực tiễn đấu tranh của nhân dân lao động; 2. Trào lưu tư tưởng lý luận phản ánh lý tưởng giải phóng nhân dân; 3. Khoa học về sứ mệnh lịch sử của giai cấp công nhân; 4. Chế độ xã hội tốt đẹp, giai đoạn đầu của hình thái cộng sản chủ nghĩa.";
+      case 4: return "Học thuyết hình thái kinh tế - xã hội: C. Mác & Ph. Ăngghen sáng lập quy luật cơ bản của vận động xã hội, cấu thành hình thái kinh tế - xã hội. V.I. Lênin phát triển và hiện thực hóa tại Nga Xô viết.";
+      case 5: return "Tính tất yếu của sự thay thế hình thái KT-XH: 1. Sự phát triển của Lực lượng sản xuất (xã hội hóa mâu thuẫn quan hệ sản xuất tư nhân); 2. Sự trưởng thành của Giai cấp công nhân (lực lượng tiên phong). Thay thế là quá trình lịch sử - tự nhiên.";
+      case 6: return "Hai giai đoạn của hình thái KT-XH cộng sản: Giai đoạn thấp (Chủ nghĩa xã hội): thoát thai từ TBCN, còn nhiều dấu vết của xã hội cũ. Giai đoạn cao (Chủ nghĩa cộng sản): phát triển hoàn toàn trên cơ sở của chính nó, quan hệ chín muồi.";
+      case 7: return "Thời kỳ quá độ lên chủ nghĩa xã hội: Là thời kỳ cải biến cách mạng từ xã hội tư bản lên xã hội cộng sản. Đi liền với thời kỳ quá độ chính trị và chuyên chính cách mạng của giai cấp vô sản.";
+      case 8: return "Hai nghĩa của thời kỳ quá độ: Nghĩa thứ nhất (gián tiếp): các nước chưa qua CNTB phát triển, là 'cơn đau đẻ kéo dài' cần thời kỳ lâu dài, gian khổ (như Việt Nam). Nghĩa thứ hai (trực tiếp): các nước đã qua CNTB phát triển cao lên thẳng CNCS.";
+      case 9: return "Sơ đồ tổng quát chương học: Hình thái cộng sản chủ nghĩa chia làm: 1. Giai đoạn thấp (CNXH - thoát thai từ cũ); 2. Giai đoạn cao (CNCS - phát triển trên cơ sở mới); 3. Thời kỳ quá độ (giữa TBCN lên CSCN theo 2 nghĩa).";
+      case 10: return "Trắc nghiệm ôn tập nhanh và không gian thảo luận cuối bài học.";
+      default: return "";
+    }
+  };
+
+  // Send message to Gemini API
+  const sendChatMessage = async (textToSend) => {
+    const promptText = textToSend || chatInput;
+    if (!promptText.trim() || !apiKey) return;
+
+    const userMessage = { role: 'user', text: promptText };
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsAiLoading(true);
+
+    const activeSlideText = getActiveSlideContext(activeSection);
+    const systemPrompt = `Bạn là một giáo sư giảng dạy môn Chủ nghĩa xã hội khoa học tại Việt Nam.
+Hãy trả lời câu hỏi của sinh viên một cách ngắn gọn, dễ hiểu, học thuật nhưng thực tế và dễ hình dung.
+Khi trả lời hãy liên hệ với thực tiễn Việt Nam hoặc ví dụ lịch sử nếu phù hợp.
+Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang học:
+"${activeSlideText}"`;
+
+    // Map history to Gemini format: [{ role: 'user'|'model', parts: [{ text: '...' }] }]
+    const historyPayload = [
+      ...chatMessages.filter(m => m.role === 'user' || m.role === 'model'),
+      userMessage
+    ].map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.text }]
+    }));
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: historyPayload,
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          }
+        })
+      });
+
+      const data = await response.json();
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi. Vui lòng kiểm tra lại API Key hoặc cài đặt mạng.";
+      
+      setChatMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { role: 'model', text: "Lỗi kết nối. Không thể liên lạc được với API Google Gemini. Vui lòng thử lại sau." }]);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const handleQuizOptionClick = (idx) => {
     if (quizSubmitted) return;
@@ -256,6 +371,135 @@ function App() {
       <div className={`keyboard-hint ${showHint ? 'visible' : ''}`}>
         <Info size={14} />
         Dùng phím <span className="key-tag">↑</span> <span className="key-tag">↓</span> hoặc cuộn trang để di chuyển
+      </div>
+
+      {/* Floating AI Study Assistant Bubble */}
+      <button 
+        className="ai-chat-bubble"
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        title="Trợ lý học tập AI"
+      >
+        <Sparkles size={20} />
+      </button>
+
+      {/* AI Chat Drawer Sidebar */}
+      <div className={`ai-chat-drawer ${isChatOpen ? 'open' : ''}`}>
+        <div className="ai-chat-header">
+          <h3><Sparkles size={16} style={{ color: '#d946ef' }} /> Trợ lý học tập AI</h3>
+          <button className="close-btn" onClick={() => setIsChatOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="chat-body">
+          {/* API Key Setup block if not loaded */}
+          {!apiKey ? (
+            <div className="api-key-setup">
+              <h4>🔑 Cần cấu hình API Key</h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', lineHeight: '1.4' }}>
+                Để bảo mật và tránh tốn phí cho người phát triển, vui lòng lấy API Key Gemini miễn phí của bạn tại{' '}
+                <a 
+                  href="https://aistudio.google.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+                >
+                  Google AI Studio
+                </a>{' '}
+                và dán vào đây:
+              </p>
+              <div className="api-key-input-group">
+                <input 
+                  type="password" 
+                  placeholder="Dán AI API Key của bạn..." 
+                  className="api-key-input"
+                  value={tempApiKey}
+                  onChange={(e) => setTempApiKey(e.target.value)}
+                />
+                <button className="api-key-save-btn" onClick={handleSaveApiKey}>Lưu</button>
+              </div>
+            </div>
+          ) : (
+            <div className="api-key-setup" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.75rem' }}>✓ Đã kết nối API Gemini</span>
+              <button 
+                onClick={handleClearApiKey}
+                style={{ background: 'transparent', border: 'none', color: '#ef4444', textDecoration: 'underline', fontSize: '0.75rem', cursor: 'pointer' }}
+              >
+                Xóa Key
+              </button>
+            </div>
+          )}
+
+          {/* Chat Messages */}
+          <div className="chat-message-list">
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} className={`chat-msg ${msg.role}`}>
+                {msg.text}
+              </div>
+            ))}
+
+            {isAiLoading && (
+              <div className="ai-loading-bubble">
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick suggestions depending on active slide context */}
+          {apiKey && (
+            <div className="quick-prompts">
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy giải thích sâu hơn và đưa ra ý nghĩa cốt lõi của nội dung ở slide hiện tại.")}
+              >
+                💡 Giải thích slide này
+              </button>
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy đưa ra một câu hỏi phản biện hoặc thảo luận hay cho cả lớp về nội dung slide này.")}
+              >
+                ❓ Đặt câu hỏi thảo luận
+              </button>
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy đưa ra một ví dụ thực tế cụ thể ở Việt Nam liên quan đến nội dung này.")}
+              >
+                📝 Ví dụ thực tế VN
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Chat input footer */}
+        <div className="chat-footer">
+          <form 
+            className="chat-input-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendChatMessage();
+            }}
+          >
+            <input 
+              type="text" 
+              placeholder={apiKey ? "Nhập câu hỏi triết học..." : "Vui lòng nhập API Key..."} 
+              className="chat-text-input"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              disabled={!apiKey || isAiLoading}
+            />
+            <button 
+              type="submit" 
+              className="chat-send-btn"
+              disabled={!apiKey || !chatInput.trim() || isAiLoading}
+            >
+              <Send size={14} />
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Floating Info & Control Panel */}
