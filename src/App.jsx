@@ -22,9 +22,11 @@ import {
   Minimize2,
   ArrowUp,
   X,
-  Send
+  Send,
+  RotateCcw
 } from 'lucide-react';
 import './App.css';
+import bacHoMacLeninImage from './assets/bac-ho-mac-lenin.jpeg';
 
 function App() {
   const [activeSection, setActiveSection] = useState(1);
@@ -311,6 +313,7 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
 
   return (
     <div className="presentation-container">
+      <div className="vietnam-flag-silk" aria-hidden="true"></div>
       {/* Fixed background ambient lights */}
       <div className="ambient-glow-1"></div>
       <div className="ambient-glow-2"></div>
@@ -557,6 +560,9 @@ function renderSlideSection(slideNum, quizProps) {
             </div>
             <div className="cover-info">
               <span>(Nguồn: Giáo trình Chủ nghĩa xã hội khoa học — Quốc gia, Chương 3, tr.86-89)</span>
+            </div>
+            <div className="cover-image-panel">
+              <img src={bacHoMacLeninImage} alt="Bác Hồ, Mác, Lênin và biểu tượng búa liềm trên nền cờ đỏ" />
             </div>
           </div>
         );
