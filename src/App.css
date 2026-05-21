@@ -257,28 +257,34 @@ body {
 }
 
 .cover-title {
-  font-family: var(--font-sans);
-  font-size: 2.8rem;
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #ffffff 30%, #ff7300 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  max-width: 900px;
+  color: #000000;
+  text-shadow: none;
+  -webkit-text-fill-color: #000000;
+  -webkit-text-stroke: 0px transparent;
+  -webkit-background-clip: unset;
+  background: none;
+  max-width: 960px;
   margin-left: auto;
   margin-right: auto;
+  text-transform: uppercase;
 }
 
 .cover-subtitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 30px;
-  border-bottom: 2px solid var(--primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 28px;
+  border-bottom: 2px solid rgba(17, 17, 17, 0.12);
   padding-bottom: 12px;
   display: inline-block;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .cover-info {
@@ -930,8 +936,8 @@ body {
 }
 
 .mnemonic-badge {
-  background: rgba(245, 158, 11, 0.2);
-  color: var(--accent);
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 6px;
@@ -942,6 +948,10 @@ body {
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
+}
+
+.mnemonic-badge svg {
+  color: #ef4444;
 }
 
 .mnemonic-text {
@@ -1667,20 +1677,23 @@ body {
   box-shadow: 0 14px 42px rgba(92, 0, 8, 0.22);
 }
 
-.header-left {
+..header-left {
   min-width: 260px;
 }
 
 .header-title {
-  color: var(--text-muted);
+  color: #111111;
 }
 
 .header-chapter,
 .cover-title,
 .angle-num {
-  background: linear-gradient(135deg, #5c0008 0%, #d00020 34%, #ff1f3d 62%, #ffb000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #111111;
+  text-shadow: none;
+  -webkit-text-stroke: 0px transparent;
+  -webkit-text-fill-color: #111111;
+  -webkit-background-clip: unset;
+  background: none;
 }
 
 .header-nav {
