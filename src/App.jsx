@@ -622,43 +622,7 @@ Nội dung slide hiện tại sinh viên đang xem:
 
         <div className="chat-body">
           {/* API Key Setup block if not loaded */}
-          {!apiKey ? (
-            <div className="api-key-setup">
-              <h4>🔑 Cần cấu hình API Key</h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', lineHeight: '1.4' }}>
-                Để bảo mật và tránh tốn phí cho người phát triển, vui lòng lấy API Key Gemini miễn phí của bạn tại{' '}
-                <a 
-                  href="https://aistudio.google.com/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--accent)', textDecoration: 'underline' }}
-                >
-                  Google AI Studio
-                </a>{' '}
-                và dán vào đây:
-              </p>
-              <div className="api-key-input-group">
-                <input 
-                  type="password" 
-                  placeholder="Dán AI API Key của bạn..." 
-                  className="api-key-input"
-                  value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
-                />
-                <button className="api-key-save-btn" onClick={handleSaveApiKey}>Lưu</button>
-              </div>
-            </div>
-          ) : (
-            <div className="api-key-setup" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.75rem' }}>✓ Đã kết nối API Gemini</span>
-              <button 
-                onClick={handleClearApiKey}
-                style={{ background: 'transparent', border: 'none', color: '#ef4444', textDecoration: 'underline', fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                Xóa Key
-              </button>
-            </div>
-          )}
+          
 
           {/* Chat Messages */}
           <div className="chat-message-list">
@@ -699,12 +663,7 @@ Nội dung slide hiện tại sinh viên đang xem:
               >
                 🇻🇳 Liên hệ Việt Nam
               </button>
-              <button
-                className="quick-prompt-btn"
-                onClick={() => sendChatMessage("So sánh và chỉ ra điểm khác biệt quan trọng nhất giữa các khái niệm chính trong Chương 3 (CNXH, CNCS, thời kỳ quá độ).")}
-              >
-                🔍 So sánh khái niệm
-              </button>
+              
             </div>
           )}
         </div>
@@ -889,8 +848,8 @@ function renderSlideSection(slideNum, quizProps) {
               <div className="slide-subtitle">GÓC NHÌN ĐA CHIỀU</div>
               <h2 className="slide-title">Các góc độ tiếp cận Chủ nghĩa xã hội</h2>
             </div>
-            <div className="slide-body">
-              <div className="angles-grid">
+            <div className="slide-body slide-split-layout">
+              <div className="angles-grid slide-split-text">
                 <div className="angle-card">
                   <div className="angle-num">01</div>
                   <h3 className="angle-title">Phong trào thực tiễn</h3>
@@ -923,6 +882,9 @@ function renderSlideSection(slideNum, quizProps) {
                   </p>
                 </div>
               </div>
+              <div className="slide-split-img">
+                <img src="/images/slide3.png" alt="Các góc độ Chủ nghĩa xã hội" />
+              </div>
             </div>
           </>
         );
@@ -935,6 +897,9 @@ function renderSlideSection(slideNum, quizProps) {
               <h2 className="slide-title">Học thuyết hình thái kinh tế - xã hội</h2>
             </div>
             <div className="slide-body">
+              <div className="slide-banner-img">
+                <img src="/images/slide4.png" alt="C. Mác, Ph. Ăngghen, V.I. Lênin" />
+              </div>
               <div className="theory-layout">
                 <div className="theory-author-box">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -988,6 +953,9 @@ function renderSlideSection(slideNum, quizProps) {
               <h2 className="slide-title">Tính tất yếu của sự thay thế hình thái KT-XH</h2>
             </div>
             <div className="slide-body">
+              <div className="slide-banner-img">
+                <img src="/images/slide5.png" alt="Lực lượng sản xuất và Quan hệ sản xuất" />
+              </div>
               <div className="inevitability-grid">
                 <div className="inevitability-card">
                   <div className="inevitability-header">
@@ -1085,6 +1053,9 @@ function renderSlideSection(slideNum, quizProps) {
               <h2 className="slide-title">Thời kỳ quá độ lên Chủ nghĩa xã hội</h2>
             </div>
             <div className="slide-body">
+              <div className="slide-banner-img">
+                <img src="/images/slide7.png" alt="Thời kỳ quá độ" />
+              </div>
               <div className="quote-layout">
                 <div className="quote-card">
                   <p className="quote-text">
@@ -1128,9 +1099,9 @@ function renderSlideSection(slideNum, quizProps) {
                 <div className="flow-step">
                   <div className="flow-header">Nghĩa thứ nhất (Quá độ gián tiếp)</div>
                   <div className="flow-body">
-                    <div>🎯 <strong>Đối tượng:</strong> Các nước chưa trải qua chủ nghĩa tư bản phát triển (vd: Việt Nam, Nga Xô viết).</div>
-                    <div>⏳ <strong>Đặc điểm:</strong> Cần thời kỳ quá độ khá lâu dài và gian khổ — ví như những <em>\"cơn đau đẻ kéo dài\"</em>.</div>
-                    <div>🛤️ <strong>Bước đi:</strong> Chủ nghĩa tư bản ➔ <strong>Chủ nghĩa xã hội</strong>.</div>
+                    <div> <strong>Đối tượng:</strong> Các nước chưa trải qua chủ nghĩa tư bản phát triển (vd: Việt Nam, Nga Xô viết).</div>
+                    <div> <strong>Đặc điểm:</strong> Cần thời kỳ quá độ khá lâu dài và gian khổ — ví như những <em>\"cơn đau đẻ kéo dài\"</em>.</div>
+                    <div> <strong>Bước đi:</strong> Chủ nghĩa tư bản ➔ <strong>Chủ nghĩa xã hội</strong>.</div>
                   </div>
                 </div>
 
@@ -1141,9 +1112,9 @@ function renderSlideSection(slideNum, quizProps) {
                 <div className="flow-step" style={{ borderLeftColor: 'var(--primary-light)' }}>
                   <div className="flow-header" style={{ color: 'var(--primary-light)' }}>Nghĩa thứ hai (Quá độ trực tiếp)</div>
                   <div className="flow-body">
-                    <div>🎯 <strong>Đối tượng:</strong> Các nước đã trải qua chủ nghĩa tư bản phát triển cao (như các nước Tây Âu).</div>
-                    <div>⏳ <strong>Đặc điểm:</strong> Cải biến cách mạng từ xã hội cũ sang xã hội mới, trực tiếp và diễn ra có lộ trình ngắn hơn.</div>
-                    <div>🛤️ <strong>Bước đi:</strong> Chủ nghĩa tư bản ➔ <strong>Chủ nghĩa cộng sản</strong>.</div>
+                    <div> <strong>Đối tượng:</strong> Các nước đã trải qua chủ nghĩa tư bản phát triển cao (như các nước Tây Âu).</div>
+                    <div> <strong>Đặc điểm:</strong> Cải biến cách mạng từ xã hội cũ sang xã hội mới, trực tiếp và diễn ra có lộ trình ngắn hơn.</div>
+                    <div> <strong>Bước đi:</strong> Chủ nghĩa tư bản ➔ <strong>Chủ nghĩa cộng sản</strong>.</div>
                   </div>
                 </div>
               </div>
