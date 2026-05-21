@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  BookOpen,
-  Award,
-  ShieldAlert,
-  TrendingUp,
-  BookMarked,
-  Cpu,
-  Users,
-  Layers,
-  ArrowRight,
-  Quote as QuoteIcon,
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  BookOpen, 
+  Award, 
+  ShieldAlert, 
+  TrendingUp, 
+  BookMarked, 
+  Cpu, 
+  Users, 
+  Layers, 
+  ArrowRight, 
+  Quote as QuoteIcon, 
+  HelpCircle, 
+  MessageSquare,
   Sparkles,
   Info,
   Lightbulb,
@@ -21,48 +23,10 @@ import {
   ArrowUp,
   X,
   Send,
-  RotateCcw,
-  Target,
-  Eye,
-  GitBranch,
-  Network,
-  Gamepad2,
+  RotateCcw
 } from 'lucide-react';
 import './App.css';
 import bacHoMacLeninImage from './assets/bac-ho-mac-lenin.jpeg';
-
-// ── Game Data ────────────────────────────────────────────────────────────────
-
-const MATCHING_PAIRS = [
-  { id: 1, term: 'Giai đoạn THẤP (CNXH)', def: 'Thoát thai từ TBCN, còn mang nhiều dấu vết của xã hội cũ' },
-  { id: 2, term: 'Giai đoạn CAO (CNCS)', def: 'Phát triển hoàn toàn trên cơ sở của chính nó, quan hệ chín muồi' },
-  { id: 3, term: 'Quá độ gián tiếp', def: 'Nước chưa qua CNTB → lên CNXH, cần thời kỳ lâu dài, gian khổ' },
-  { id: 4, term: 'Quá độ trực tiếp', def: 'Nước đã qua CNTB phát triển cao → cải biến lên CNCS' },
-  { id: 5, term: 'Chuyên chính cách mạng', def: 'Hình thức nhà nước tất yếu trong thời kỳ quá độ chính trị' },
-];
-const MATCHING_RIGHT_ORDER = [2, 4, 1, 5, 3];
-
-const FLASHCARDS = [
-  { id: 1, term: '4 góc độ tiếp cận CNXH', def: 'Phong trào thực tiễn → Trào lưu tư tưởng → Khoa học về sứ mệnh GCCN → Chế độ xã hội (giai đoạn đầu hình thái CSCN)' },
-  { id: 2, term: 'Học thuyết hình thái KT-XH', def: 'Mác-Ăngghen sáng lập, vạch rõ quy luật vận động xã hội; gồm LLSX, QHSX, Kiến trúc thượng tầng' },
-  { id: 3, term: 'Tiền đề vật chất tất yếu thứ nhất', def: 'LLSX xã hội hóa mâu thuẫn với QHSX tư nhân TBCN → buộc phải thay thế' },
-  { id: 4, term: 'Tiền đề vật chất tất yếu thứ hai', def: 'Giai cấp công nhân trưởng thành — chủ thể cách mạng tiên phong, lật đổ CNTB' },
-  { id: 5, term: '"Cơn đau đẻ kéo dài"', def: 'Ẩn dụ của Lênin về quá độ gián tiếp: thời kỳ lâu dài, gian khổ cho nước chưa qua CNTB phát triển' },
-  { id: 6, term: 'Phê phán cương lĩnh Gôta (1875)', def: 'Tác phẩm C. Mác — nguồn trích dẫn về thời kỳ quá độ và chuyên chính cách mạng của giai cấp vô sản' },
-  { id: 7, term: 'CNXH khác CNCS ở điểm nào?', def: 'CNXH = giai đoạn thấp, còn dấu vết cũ. CNCS = giai đoạn cao, phát triển hoàn toàn trên cơ sở của chính nó' },
-  { id: 8, term: 'Việt Nam & thời kỳ quá độ', def: 'Thuộc nghĩa thứ nhất (gián tiếp): đi lên CNXH từ nước thuộc địa nửa phong kiến, chưa qua CNTB phát triển' },
-];
-
-const TF_QUESTIONS = [
-  { statement: 'Việt Nam thuộc trường hợp quá độ TRỰC TIẾP theo V.I. Lênin.', answer: false, explain: 'Sai. Việt Nam quá độ GIÁN TIẾP — chưa trải qua CNTB phát triển, thuộc nghĩa thứ nhất.' },
-  { statement: 'Chủ nghĩa xã hội là giai đoạn THẤP của hình thái KT-XH cộng sản chủ nghĩa.', answer: true, explain: 'Đúng. CNXH là giai đoạn đầu, vừa thoát thai từ TBCN, còn mang dấu vết của xã hội cũ.' },
-  { statement: 'C. Mác viết "Phê phán cương lĩnh Gôta" vào năm 1875.', answer: true, explain: 'Đúng. Đây là nguồn trích dẫn nổi tiếng về thời kỳ quá độ chính trị và chuyên chính vô sản.' },
-  { statement: 'Hình thái KT-XH cộng sản chủ nghĩa chỉ có DUY NHẤT một giai đoạn.', answer: false, explain: 'Sai. Có HAI giai đoạn: giai đoạn thấp (CNXH) và giai đoạn cao (CNCS).' },
-  { statement: 'CNXH được tiếp cận từ đúng 3 góc độ theo quan điểm Mác-Lênin.', answer: false, explain: 'Sai. Có 4 góc độ: phong trào thực tiễn, trào lưu tư tưởng, khoa học và chế độ xã hội.' },
-  { statement: 'Sự thay thế TBCN bằng CNXH là quá trình lịch sử - tự nhiên, không phụ thuộc ý chí chủ quan.', answer: true, explain: 'Đúng. Mác-Lênin khẳng định đây là quy luật khách quan, tất yếu của lịch sử.' },
-  { statement: 'V.I. Lênin là người SÁNG LẬP học thuyết hình thái kinh tế - xã hội.', answer: false, explain: 'Sai. C. Mác và Ph. Ăngghen sáng lập. Lênin chỉ phát triển và hiện thực hóa tại Nga Xô viết.' },
-  { statement: 'Trong thời kỳ quá độ, nhà nước tất yếu là chuyên chính cách mạng của giai cấp vô sản.', answer: true, explain: 'Đúng. Theo C. Mác, thời kỳ quá độ chính trị gắn liền với chuyên chính cách mạng của GCVS.' },
-];
 
 function App() {
   const [activeSection, setActiveSection] = useState(1);
@@ -78,88 +42,28 @@ function App() {
 
   // AI Assistant States
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(() => {
-    return localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
-  });
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [tempApiKey, setTempApiKey] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
-    { role: 'model', text: import.meta.env.VITE_GEMINI_API_KEY
-        ? 'Xin chào! Tôi là Trợ lý AI chuyên về Chương 3: Chủ nghĩa xã hội và thời kỳ quá độ. Hãy đặt câu hỏi hoặc chọn gợi ý nhanh bên dưới!'
-        : 'Xin chào! Tôi là Trợ lý AI chuyên về Chương 3: Chủ nghĩa xã hội và thời kỳ quá độ. Hãy nhập API Key Gemini để bắt đầu.'
-    }
+    { role: 'model', text: 'Xin chào! Tôi là Trợ lý AI học tập chuyên về môn Chủ nghĩa xã hội khoa học. Hãy nhập API Key của bạn để tôi có thể hỗ trợ giải thích slide, tìm ví dụ thực tế hay đưa ra câu hỏi phản biện nhé.' }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   const totalSlides = 10;
   const chatEndRef = useRef(null);
 
-  // ── Toast & Confetti ──────────────────────────────────────────────────────
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = useCallback((message, type = 'info') => {
-    const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2800);
-  }, []);
-
-  const triggerConfetti = useCallback(() => {
-    const container = document.getElementById('confetti-container');
-    if (!container) return;
-    const colors = ['#ef233c', '#ffb703', '#10b981', '#3b82f6', '#d946ef', '#ff6b35', '#ffd21f'];
-    for (let i = 0; i < 90; i++) {
-      const piece = document.createElement('div');
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const left = 10 + Math.random() * 80;
-      const delay = Math.random() * 0.6;
-      const duration = 1.6 + Math.random() * 1.4;
-      const isRect = Math.random() > 0.45;
-      piece.style.cssText = [
-        'position:absolute', `left:${left}vw`, 'top:-14px', `background:${color}`,
-        `animation:confettiFall ${duration}s ease-in ${delay}s forwards`,
-        isRect
-          ? `width:${6 + Math.floor(Math.random() * 6)}px;height:${10 + Math.floor(Math.random() * 6)}px;border-radius:2px`
-          : `width:${8 + Math.floor(Math.random() * 5)}px;height:${8 + Math.floor(Math.random() * 5)}px;border-radius:50%`,
-        `transform:rotate(${Math.floor(Math.random() * 360)}deg)`,
-      ].join(';');
-      container.appendChild(piece);
-      setTimeout(() => piece.remove(), (delay + duration + 0.3) * 1000);
-    }
-  }, []);
-
-  // ── Game Hub ──────────────────────────────────────────────────────────────
-  const [activeGame, setActiveGame] = useState('quiz');
-
-  // Matching game
-  const [matchLeft, setMatchLeft] = useState(null);
-  const [matchedPairs, setMatchedPairs] = useState([]);
-  const [matchWrong, setMatchWrong] = useState(false);
-
-  // Flashcard
-  const [fcIndex, setFcIndex] = useState(0);
-  const [fcFlipped, setFcFlipped] = useState(false);
-  const [fcKnown, setFcKnown] = useState([]);
-  const [fcUnknown, setFcUnknown] = useState([]);
-
-  // True / False
-  const [tfIndex, setTfIndex] = useState(0);
-  const [tfScore, setTfScore] = useState(0);
-  const [tfStreak, setTfStreak] = useState(0);
-  const [tfTimeLeft, setTfTimeLeft] = useState(10);
-  const [tfAnswered, setTfAnswered] = useState(null);
-  const [tfGameStatus, setTfGameStatus] = useState('idle');
-
   const navItems = [
-    { num: 1,  label: "Trang bìa",   icon: <Sparkles  size={13} /> },
-    { num: 2,  label: "Mục tiêu",    icon: <Target    size={13} /> },
-    { num: 3,  label: "Góc độ",      icon: <Eye       size={13} /> },
-    { num: 4,  label: "Học thuyết",  icon: <BookMarked size={13} /> },
-    { num: 5,  label: "Tất yếu",     icon: <TrendingUp size={13} /> },
-    { num: 6,  label: "2 Giai đoạn", icon: <Layers    size={13} /> },
-    { num: 7,  label: "Quá độ",      icon: <ArrowRight size={13} /> },
-    { num: 8,  label: "2 Nghĩa",     icon: <GitBranch size={13} /> },
-    { num: 9,  label: "Sơ đồ",       icon: <Network   size={13} /> },
-    { num: 10, label: "Game",         icon: <Gamepad2  size={13} /> },
+    { num: 1, label: "Trang bìa" },
+    { num: 2, label: "Mục tiêu" },
+    { num: 3, label: "Góc độ" },
+    { num: 4, label: "Học thuyết" },
+    { num: 5, label: "Tất yếu" },
+    { num: 6, label: "2 Giai đoạn" },
+    { num: 7, label: "Quá độ" },
+    { num: 8, label: "2 Nghĩa" },
+    { num: 9, label: "Sơ đồ" },
+    { num: 10, label: "Trắc nghiệm" }
   ];
 
   const quizQuestions = [
@@ -293,123 +197,6 @@ function App() {
     }
   }, [chatMessages, isAiLoading]);
 
-  // TF countdown timer
-  useEffect(() => {
-    if (tfGameStatus !== 'playing' || tfAnswered !== null) return;
-    if (tfTimeLeft <= 0) {
-      setTfAnswered('timeout');
-      setTfStreak(0);
-      addToast('⏰ Hết giờ! Mất lượt câu này', 'warning');
-      return;
-    }
-    const t = setTimeout(() => setTfTimeLeft(p => p - 1), 1000);
-    return () => clearTimeout(t);
-  }, [tfGameStatus, tfTimeLeft, tfAnswered]);
-
-  // Auto-confetti on perfect scores
-  useEffect(() => {
-    if (quizStep === 4 && quizScore === 3) {
-      setTimeout(triggerConfetti, 350);
-      addToast('🏆 Hoàn hảo! 3/3 câu chính xác!', 'streak');
-    }
-  }, [quizStep]);
-
-  useEffect(() => {
-    if (tfGameStatus === 'done' && tfScore >= 80) {
-      setTimeout(triggerConfetti, 400);
-      addToast('🏆 Xuất sắc! Điểm cao tuyệt vời!', 'streak');
-    }
-  }, [tfGameStatus]);
-
-  // Ripple effect on interactive buttons
-  useEffect(() => {
-    const handleMouseDown = (e) => {
-      const target = e.target.closest('.control-btn, .game-tab-btn, .step-node, .tf-btn, .match-card, .quick-prompt-btn');
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height) * 2;
-      const x = e.clientX - rect.left - size / 2;
-      const y = e.clientY - rect.top - size / 2;
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
-      target.appendChild(ripple);
-      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-    };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, []);
-
-  // ── Game Handlers ─────────────────────────────────────────────────────────
-
-  const handleMatchLeft = (id) => {
-    if (matchedPairs.includes(id)) return;
-    setMatchLeft(id);
-    setMatchWrong(false);
-  };
-
-  const handleMatchRight = (id) => {
-    if (!matchLeft || matchedPairs.includes(id)) return;
-    if (matchLeft === id) {
-      const newPairs = [...matchedPairs, id];
-      setMatchedPairs(newPairs);
-      setMatchLeft(null);
-      setMatchWrong(false);
-      if (newPairs.length === MATCHING_PAIRS.length) {
-        addToast('🎉 Hoàn thành tất cả cặp ghép!', 'success');
-        setTimeout(triggerConfetti, 300);
-      } else {
-        addToast(`✅ Ghép đúng! ${newPairs.length}/${MATCHING_PAIRS.length} cặp`, 'success');
-      }
-    } else {
-      setMatchWrong(true);
-      addToast('❌ Không khớp! Thử lại nhé', 'error');
-      setTimeout(() => { setMatchLeft(null); setMatchWrong(false); }, 700);
-    }
-  };
-
-  const resetMatchGame = () => { setMatchLeft(null); setMatchedPairs([]); setMatchWrong(false); };
-
-  const handleFlipCard = () => setFcFlipped(p => !p);
-  const handleFcKnown = () => { setFcKnown(p => [...p, fcIndex]); setFcFlipped(false); setFcIndex(p => p + 1); };
-  const handleFcUnknown = () => { setFcUnknown(p => [...p, fcIndex]); setFcFlipped(false); setFcIndex(p => p + 1); };
-  const resetFlashcards = () => { setFcIndex(0); setFcFlipped(false); setFcKnown([]); setFcUnknown([]); };
-
-  const handleTfAnswer = (ans) => {
-    if (tfAnswered !== null || tfGameStatus !== 'playing') return;
-    const correct = ans === TF_QUESTIONS[tfIndex].answer;
-    setTfAnswered(ans);
-    if (correct) {
-      const bonus = Math.ceil(tfTimeLeft / 2);
-      const points = 10 + bonus;
-      const newStreak = tfStreak + 1;
-      setTfScore(p => p + points);
-      setTfStreak(newStreak);
-      if (newStreak >= 3) {
-        addToast(`🔥 Chuỗi ${newStreak} câu đúng liên tiếp!`, 'streak');
-      } else {
-        addToast(`✅ Chính xác! +${points} điểm`, 'success');
-      }
-    } else {
-      const willDeduct = tfScore > 0;
-      setTfScore(p => Math.max(0, p - 5));
-      setTfStreak(0);
-      addToast(
-        willDeduct ? '❌ Chưa đúng! −5 điểm' : '❌ Chưa đúng! Điểm đang ở 0, giữ nguyên',
-        'error'
-      );
-    }
-  };
-
-  const handleTfNext = () => {
-    if (tfIndex >= TF_QUESTIONS.length - 1) { setTfGameStatus('done'); return; }
-    setTfIndex(p => p + 1);
-    setTfAnswered(null);
-    setTfTimeLeft(10);
-  };
-
-  const resetTfGame = () => { setTfIndex(0); setTfScore(0); setTfStreak(0); setTfTimeLeft(10); setTfAnswered(null); setTfGameStatus('idle'); };
-
   // Save API key
   const handleSaveApiKey = () => {
     if (tempApiKey.trim()) {
@@ -461,20 +248,10 @@ function App() {
     setIsAiLoading(true);
 
     const activeSlideText = getActiveSlideContext(activeSection);
-    const systemPrompt = `Bạn là trợ lý học tập chuyên sâu về Chương 3: "Chủ nghĩa xã hội và thời kỳ quá độ lên chủ nghĩa xã hội" trong môn Chủ nghĩa xã hội khoa học, dành cho sinh viên đại học Việt Nam.
-
-PHẠM VI: Chỉ trả lời câu hỏi thuộc Chương 3, gồm:
-1. Các góc độ tiếp cận CNXH (phong trào thực tiễn, trào lưu tư tưởng, khoa học, chế độ xã hội)
-2. Học thuyết hình thái kinh tế - xã hội (Mác - Ăngghen - Lênin)
-3. Tính tất yếu thay thế hình thái KT-XH TBCN bằng hình thái CSCN
-4. Hai giai đoạn hình thái CSCN: giai đoạn thấp (CNXH) và giai đoạn cao (CNCS)
-5. Thời kỳ quá độ và hai nghĩa quá độ theo V.I. Lênin
-6. Con đường đi lên CNXH ở Việt Nam
-
-Nếu câu hỏi nằm ngoài Chương 3, từ chối lịch sự và nhắc sinh viên tập trung vào nội dung chương.
-Trả lời ngắn gọn, học thuật, dễ hiểu. Liên hệ thực tiễn Việt Nam khi phù hợp.
-
-Nội dung slide hiện tại sinh viên đang xem:
+    const systemPrompt = `Bạn là một giáo sư giảng dạy môn Chủ nghĩa xã hội khoa học tại Việt Nam.
+Hãy trả lời câu hỏi của sinh viên một cách ngắn gọn, dễ hiểu, học thuật nhưng thực tế và dễ hình dung.
+Khi trả lời hãy liên hệ với thực tiễn Việt Nam hoặc ví dụ lịch sử nếu phù hợp.
+Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang học:
 "${activeSlideText}"`;
 
     // Map history to Gemini format: [{ role: 'user'|'model', parts: [{ text: '...' }] }]
@@ -487,7 +264,7 @@ Nội dung slide hiện tại sinh viên đang xem:
     }));
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -518,9 +295,6 @@ Nội dung slide hiện tại sinh viên đang xem:
     setQuizSubmitted(true);
     if (idx === quizQuestions[quizStep - 1].correct) {
       setQuizScore(prev => prev + 1);
-      addToast('✅ Chính xác!', 'success');
-    } else {
-      addToast('❌ Chưa đúng! Xem giải thích bên dưới', 'error');
     }
   };
 
@@ -556,17 +330,15 @@ Nội dung slide hiện tại sinh viên đang xem:
           <div className="header-chapter">Chương 3: Chủ nghĩa xã hội & Thời kỳ quá độ</div>
         </div>
 
-        {/* Expanding capsule navigation */}
-        <nav className="capsule-nav">
-          {navItems.map((item) => (
-            <button
+        {/* Horizontal Navigation Links */}
+        <nav className="header-nav">
+          {navItems.map(item => (
+            <button 
               key={item.num}
-              className={`capsule-item ${activeSection === item.num ? 'active' : activeSection > item.num ? 'done' : ''}`}
               onClick={() => scrollToSection(item.num)}
-              title={item.label}
+              className={`nav-link ${activeSection === item.num ? 'active' : ''}`}
             >
-              {item.icon}
-              <span className="capsule-label">{item.label}</span>
+              {item.label}
             </button>
           ))}
         </nav>
@@ -588,13 +360,15 @@ Nội dung slide hiện tại sinh viên đang xem:
           >
             <div className="slide-content">
               {renderSlideSection(item.num, {
-                quizStep, setQuizStep, quizQuestions, selectedOption, handleQuizOptionClick,
-                quizSubmitted, handleNextQuiz, quizScore, handleRestartQuiz,
-                activeGame, setActiveGame,
-                matchLeft, matchedPairs, matchWrong, handleMatchLeft, handleMatchRight, resetMatchGame,
-                fcIndex, fcFlipped, fcKnown, fcUnknown, handleFlipCard, handleFcKnown, handleFcUnknown, resetFlashcards,
-                tfIndex, tfScore, tfStreak, tfTimeLeft, tfAnswered, tfGameStatus,
-                setTfGameStatus, handleTfAnswer, handleTfNext, resetTfGame,
+                quizStep, 
+                setQuizStep, 
+                quizQuestions, 
+                selectedOption, 
+                handleQuizOptionClick, 
+                quizSubmitted, 
+                handleNextQuiz, 
+                quizScore, 
+                handleRestartQuiz
               })}
             </div>
           </section>
@@ -683,32 +457,26 @@ Nội dung slide hiện tại sinh viên đang xem:
             <div ref={chatEndRef} />
           </div>
 
-          {/* Quick suggestions - Chương 3 focused */}
+          {/* Quick suggestions depending on active slide context */}
           {apiKey && (
             <div className="quick-prompts">
-              <button
-                className="quick-prompt-btn"
-                onClick={() => sendChatMessage("Hãy giải thích ý nghĩa cốt lõi của nội dung slide này trong Chương 3 và tại sao nó quan trọng.")}
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy giải thích sâu hơn và đưa ra ý nghĩa cốt lõi của nội dung ở slide hiện tại.")}
               >
                 💡 Giải thích slide này
               </button>
-              <button
-                className="quick-prompt-btn"
-                onClick={() => sendChatMessage("Đặt một câu hỏi thi hoặc thảo luận hay về nội dung Chương 3 đang học ở slide này.")}
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy đưa ra một câu hỏi phản biện hoặc thảo luận hay cho cả lớp về nội dung slide này.")}
               >
-                📋 Câu hỏi ôn thi
+                ❓ Đặt câu hỏi thảo luận
               </button>
-              <button
-                className="quick-prompt-btn"
-                onClick={() => sendChatMessage("Liên hệ nội dung Chương 3 này với thực tiễn công cuộc xây dựng CNXH ở Việt Nam hiện nay.")}
+              <button 
+                className="quick-prompt-btn" 
+                onClick={() => sendChatMessage("Hãy đưa ra một ví dụ thực tế cụ thể ở Việt Nam liên quan đến nội dung này.")}
               >
-                🇻🇳 Liên hệ Việt Nam
-              </button>
-              <button
-                className="quick-prompt-btn"
-                onClick={() => sendChatMessage("So sánh và chỉ ra điểm khác biệt quan trọng nhất giữa các khái niệm chính trong Chương 3 (CNXH, CNCS, thời kỳ quá độ).")}
-              >
-                🔍 So sánh khái niệm
+                📝 Ví dụ thực tế VN
               </button>
             </div>
           )}
@@ -740,46 +508,6 @@ Nội dung slide hiện tại sinh viên đang xem:
             </button>
           </form>
         </div>
-      </div>
-
-      {/* Mini-map dot-rail sidebar */}
-      <div className="minimap-sidebar">
-        <div className="minimap-rail">
-          {navItems.map(item => (
-            <button
-              key={item.num}
-              className={`minimap-dot-btn ${activeSection === item.num ? 'active' : activeSection > item.num ? 'done' : ''}`}
-              onClick={() => scrollToSection(item.num)}
-              title={item.label}
-            >
-              <span className="minimap-dot" />
-            </button>
-          ))}
-        </div>
-        <div className="minimap-labels">
-          {navItems.map(item => (
-            <button
-              key={item.num}
-              className={`minimap-label-item ${activeSection === item.num ? 'active' : activeSection > item.num ? 'done' : ''}`}
-              onClick={() => scrollToSection(item.num)}
-            >
-              <span className="minimap-label-num">{item.num}</span>
-              <span className="minimap-label-text">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Confetti container */}
-      <div id="confetti-container" className="confetti-container" aria-hidden="true" />
-
-      {/* Toast notifications */}
-      <div className="toast-container">
-        {toasts.map(toast => (
-          <div key={toast.id} className={`toast toast-${toast.type}`}>
-            {toast.message}
-          </div>
-        ))}
       </div>
 
       {/* Floating Info & Control Panel */}
@@ -1229,271 +957,121 @@ function renderSlideSection(slideNum, quizProps) {
           </>
         );
 
-      case 10: {
-        const {
-          quizStep, setQuizStep, quizQuestions, selectedOption, handleQuizOptionClick,
-          quizSubmitted, handleNextQuiz, quizScore, handleRestartQuiz,
-          activeGame, setActiveGame,
-          matchLeft, matchedPairs, matchWrong, handleMatchLeft, handleMatchRight, resetMatchGame,
-          fcIndex, fcFlipped, fcKnown, fcUnknown, handleFlipCard, handleFcKnown, handleFcUnknown, resetFlashcards,
-          tfIndex, tfScore, tfStreak, tfTimeLeft, tfAnswered, tfGameStatus,
-          setTfGameStatus, handleTfAnswer, handleTfNext, resetTfGame,
+      case 10:
+        const { 
+          quizStep, 
+          setQuizStep, 
+          quizQuestions, 
+          selectedOption, 
+          handleQuizOptionClick, 
+          quizSubmitted, 
+          handleNextQuiz, 
+          quizScore, 
+          handleRestartQuiz 
         } = quizProps;
-
-        const gameTabs = [
-          { id: 'quiz', label: '📝 Trắc nghiệm' },
-          { id: 'match', label: '🔗 Ghép đôi' },
-          { id: 'flash', label: '🃏 Thẻ nhớ' },
-          { id: 'tf',    label: '⚡ Đúng / Sai' },
-        ];
 
         return (
           <>
             <div className="slide-title-area">
               <div className="slide-subtitle">TRÒ CHƠI TƯƠNG TÁC LỚP HỌC</div>
-              <h2 className="slide-title">Kho trò chơi ôn tập Chương 3</h2>
+              <h2 className="slide-title">Trắc nghiệm ôn tập nhanh kiến thức</h2>
             </div>
             <div className="slide-body" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
-
-              {/* ── Tab switcher ── */}
-              <div className="game-tabs">
-                {gameTabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    className={`game-tab-btn ${activeGame === tab.id ? 'active' : ''}`}
-                    onClick={() => setActiveGame(tab.id)}
-                  >{tab.label}</button>
-                ))}
-              </div>
-
-              {/* ── Quiz tab ── */}
-              {activeGame === 'quiz' && (
-                <div className="quiz-container">
-                  {quizStep === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '24px 10px' }}>
-                      <div className="objective-icon" style={{ margin: '0 auto 20px', width: '50px', height: '50px' }}>
-                        <QuizIcon size={26} />
-                      </div>
-                      <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '10px' }}>Trắc nghiệm cùng cả lớp</h3>
-                      <p style={{ color: '#6f3d42', fontSize: '0.9rem', margin: '0 auto 24px', maxWidth: '560px' }}>
-                        3 câu hỏi kiểm tra mức độ hiểu bài trước khi thảo luận sâu hơn.
-                      </p>
-                      <button className="control-btn primary-btn" style={{ margin: '0 auto' }} onClick={() => setQuizStep(1)}>
-                        Bắt đầu <ArrowRight size={16} />
-                      </button>
+              <div className="quiz-container">
+                {quizStep === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 10px' }}>
+                    <div className="objective-icon" style={{ margin: '0 auto 20px', width: '50px', height: '50px' }}>
+                      <QuizIcon size={26} />
                     </div>
-                  ) : quizStep <= 3 ? (
-                    <div>
-                      <div className="quiz-status">
-                        <span>Câu {quizStep} / 3</span>
-                        <span>Điểm: {quizScore} / {quizStep - 1}</span>
-                      </div>
-                      <div className="quiz-question-box" style={{ marginTop: '8px' }}>
-                        <div className="quiz-question">{quizQuestions[quizStep - 1].q}</div>
-                        <div className="quiz-options">
-                          {quizQuestions[quizStep - 1].options.map((opt, idx) => {
-                            const isCorrect = idx === quizQuestions[quizStep - 1].correct;
-                            const isSelected = idx === selectedOption;
-                            let optionClass = '';
-                            if (quizSubmitted) {
-                              if (isSelected) optionClass = isCorrect ? 'correct selected' : 'incorrect selected';
-                              else if (isCorrect) optionClass = 'correct';
-                            }
-                            return (
-                              <div key={idx} className={`quiz-option ${optionClass}`} onClick={() => handleQuizOptionClick(idx)}>
-                                <span>{String.fromCharCode(65 + idx)}. {opt}</span>
-                                {quizSubmitted && isCorrect && <CheckCircle2 size={16} style={{ color: '#10b981' }} />}
-                                {quizSubmitted && isSelected && !isCorrect && <XCircle size={16} style={{ color: '#ef4444' }} />}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {quizSubmitted && (
-                          <div className="quiz-explanation">
-                            <strong>💡 Giải thích: </strong>{quizQuestions[quizStep - 1].explain}
-                          </div>
-                        )}
-                      </div>
-                      {quizSubmitted && (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                          <button className="control-btn primary-btn" onClick={quizStep === 3 ? () => setQuizStep(4) : handleNextQuiz}>
-                            {quizStep === 3 ? 'Xem kết quả' : 'Câu tiếp'} <ArrowRight size={16} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '24px 10px' }}>
-                      <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#b10f1d', marginBottom: '10px' }}>Tổng kết</h3>
-                      <div style={{ fontSize: '2.4rem', fontWeight: '900', margin: '12px 0', color: quizScore >= 2 ? '#10b981' : '#f59e0b' }}>
-                        {quizScore} / 3
-                      </div>
-                      <p style={{ color: '#6f3d42', marginBottom: '20px' }}>
-                        {quizScore === 3 ? '🎉 Tuyệt vời! Nắm bài rất sâu sắc.' : quizScore === 2 ? '👍 Khá tốt! Đã nắm được luận điểm cốt lõi.' : '📚 Cần ôn lại các slide lý luận nhé!'}
-                      </p>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-                        <button className="control-btn" onClick={handleRestartQuiz}><RotateCcw size={16} /> Chơi lại</button>
-                        <button className="control-btn primary-btn" onClick={() => setQuizStep(0)}>Về giới thiệu</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── Matching tab ── */}
-              {activeGame === 'match' && (
-                <div className="match-container">
-                  <div className="match-header">
-                    <span>Chọn khái niệm ở trái → chọn định nghĩa ở phải để ghép đôi</span>
-                    <span className="match-score">{matchedPairs.length} / {MATCHING_PAIRS.length} ✓</span>
+                    <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '10px' }}>Minigame ôn tập cùng cả lớp</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', maxWidth: '600px', margin: '0 auto 24px' }}>
+                      Hãy kiểm tra nhanh mức độ hiểu bài của người nghe bằng 3 câu trắc nghiệm tương tác nhanh dưới đây trước khi thảo luận sâu hơn.
+                    </p>
+                    <button className="control-btn primary-btn" style={{ margin: '0 auto', padding: '10px 20px' }} onClick={() => setQuizStep(1)}>
+                      Bắt đầu tương tác <ArrowRight size={16} />
+                    </button>
                   </div>
-                  {matchedPairs.length === MATCHING_PAIRS.length ? (
-                    <div style={{ textAlign: 'center', padding: '28px 0' }}>
-                      <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎉</div>
-                      <h3 style={{ fontWeight: '800', color: '#b10f1d', marginBottom: '16px' }}>Hoàn thành tất cả {MATCHING_PAIRS.length} cặp!</h3>
-                      <button className="control-btn primary-btn" onClick={resetMatchGame}><RotateCcw size={16} /> Chơi lại</button>
+                ) : quizStep <= 3 ? (
+                  <div>
+                    <div className="quiz-status">
+                      <span>Câu hỏi {quizStep} / 3</span>
+                      <span>Điểm số: {quizScore} / {quizStep - 1}</span>
                     </div>
-                  ) : (
-                    <div className="match-grid">
-                      <div className="match-col">
-                        {MATCHING_PAIRS.map(pair => (
-                          <div
-                            key={pair.id}
-                            className={`match-card match-left ${matchLeft === pair.id ? 'selected' : ''} ${matchedPairs.includes(pair.id) ? 'matched' : ''} ${matchWrong && matchLeft === pair.id ? 'wrong' : ''}`}
-                            onClick={() => handleMatchLeft(pair.id)}
-                          >{pair.term}</div>
-                        ))}
+                    <div className="quiz-question-box" style={{ marginTop: '8px' }}>
+                      <div className="quiz-question">
+                        {quizQuestions[quizStep - 1].q}
                       </div>
-                      <div className="match-col">
-                        {MATCHING_RIGHT_ORDER.map(id => {
-                          const pair = MATCHING_PAIRS.find(p => p.id === id);
+                      <div className="quiz-options">
+                        {quizQuestions[quizStep - 1].options.map((opt, idx) => {
+                          const isCorrect = idx === quizQuestions[quizStep - 1].correct;
+                          const isSelected = idx === selectedOption;
+                          let optionClass = "";
+                          if (quizSubmitted) {
+                            if (isSelected) {
+                              optionClass = isCorrect ? "correct selected" : "incorrect selected";
+                            } else if (isCorrect) {
+                              optionClass = "correct";
+                            }
+                          }
+
                           return (
-                            <div
-                              key={pair.id}
-                              className={`match-card match-right ${matchedPairs.includes(pair.id) ? 'matched' : ''}`}
-                              onClick={() => handleMatchRight(pair.id)}
-                            >{pair.def}</div>
+                            <div 
+                              key={idx} 
+                              className={`quiz-option ${optionClass}`}
+                              onClick={() => handleQuizOptionClick(idx)}
+                            >
+                              <span>{String.fromCharCode(65 + idx)}. {opt}</span>
+                              {quizSubmitted && isCorrect && <CheckCircle2 size={16} style={{ color: '#10b981' }} />}
+                              {quizSubmitted && isSelected && !isCorrect && <XCircle size={16} style={{ color: '#ef4444' }} />}
+                            </div>
                           );
                         })}
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {/* ── Flashcard tab ── */}
-              {activeGame === 'flash' && (
-                <div className="flash-container">
-                  <div className="flash-progress-row">
-                    <span>Thẻ {Math.min(fcIndex + 1, FLASHCARDS.length)} / {FLASHCARDS.length}</span>
-                    <span>✅ {fcKnown.length} nhớ rồi &nbsp;|&nbsp; 🔄 {fcUnknown.length} xem lại</span>
-                  </div>
-                  {fcIndex >= FLASHCARDS.length ? (
-                    <div style={{ textAlign: 'center', padding: '30px 10px' }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🃏</div>
-                      <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>Xong {FLASHCARDS.length} thẻ!</h3>
-                      <p style={{ color: '#6f3d42', marginBottom: '20px' }}>
-                        Nhớ: <strong>{fcKnown.length}</strong> &nbsp;|&nbsp; Cần ôn: <strong>{fcUnknown.length}</strong>
-                      </p>
-                      <button className="control-btn primary-btn" onClick={resetFlashcards}><RotateCcw size={16} /> Ôn lại từ đầu</button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={`flashcard ${fcFlipped ? 'flipped' : ''}`} onClick={handleFlipCard}>
-                        <div className="flashcard-inner">
-                          <div className="flashcard-front">
-                            <div className="fc-label">Thuật ngữ / Câu hỏi</div>
-                            <div className="fc-term">{FLASHCARDS[fcIndex].term}</div>
-                            <div className="fc-hint">Click để xem định nghĩa ↓</div>
-                          </div>
-                          <div className="flashcard-back">
-                            <div className="fc-label">Định nghĩa / Trả lời</div>
-                            <div className="fc-def">{FLASHCARDS[fcIndex].def}</div>
-                          </div>
-                        </div>
-                      </div>
-                      {fcFlipped && (
-                        <div className="fc-actions">
-                          <button className="control-btn fc-unknown-btn" onClick={handleFcUnknown}>🔄 Xem lại</button>
-                          <button className="control-btn primary-btn" onClick={handleFcKnown}>✅ Nhớ rồi</button>
+                      {quizSubmitted && (
+                        <div className="quiz-explanation">
+                          <strong>💡 Giải thích chi tiết: </strong> {quizQuestions[quizStep - 1].explain}
                         </div>
                       )}
-                    </>
-                  )}
-                </div>
-              )}
+                    </div>
 
-              {/* ── True/False tab ── */}
-              {activeGame === 'tf' && (
-                <div className="tf-container">
-                  {tfGameStatus === 'idle' && (
-                    <div style={{ textAlign: 'center', padding: '28px 10px' }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⚡</div>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '8px' }}>Đúng hay Sai?</h3>
-                      <p style={{ color: '#6f3d42', fontSize: '0.88rem', marginBottom: '22px', maxWidth: '480px', margin: '0 auto 22px' }}>
-                        {TF_QUESTIONS.length} phát biểu — Mỗi câu 10 giây<br/>
-                        +10 nếu đúng (thưởng thêm nếu nhanh) &nbsp;|&nbsp; -5 nếu sai
-                      </p>
-                      <button className="control-btn primary-btn" onClick={() => setTfGameStatus('playing')}>
-                        Bắt đầu <ArrowRight size={16} />
+                    {quizSubmitted && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
+                        <button className="control-btn primary-btn" onClick={quizStep === 3 ? () => setQuizStep(4) : handleNextQuiz}>
+                          {quizStep === 3 ? "Xem kết quả" : "Câu tiếp theo"} <ArrowRight size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '24px 10px' }}>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '10px', color: 'var(--accent)' }}>
+                      Tổng kết kết quả
+                    </h3>
+                    <div style={{ fontSize: '2.2rem', fontWeight: '800', margin: '16px 0', color: quizScore >= 2 ? '#10b981' : '#f59e0b' }}>
+                      {quizScore} / 3 Đúng
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>
+                      {quizScore === 3 
+                        ? "Tuyệt vời! Cả lớp đã nắm bài học cực kỳ sâu sắc." 
+                        : quizScore === 2 
+                          ? "Khá tốt! Đã nắm được các luận điểm cốt lõi cơ bản." 
+                          : "Cần xem kỹ lại các slide lý luận phía trước nhé!"}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                      <button className="control-btn" onClick={handleRestartQuiz}>
+                        <RotateCcw size={16} /> Chơi lại
+                      </button>
+                      <button className="control-btn primary-btn" onClick={() => setQuizStep(0)}>
+                        Quay lại giới thiệu
                       </button>
                     </div>
-                  )}
-
-                  {tfGameStatus === 'playing' && (
-                    <>
-                      <div className="tf-header">
-                        <div className="tf-stats">
-                          <span>🏆 {tfScore} điểm</span>
-                          <span>Câu {tfIndex + 1} / {TF_QUESTIONS.length}</span>
-                          {tfStreak >= 2 && <span>🔥 ×{tfStreak} streak</span>}
-                        </div>
-                        <div className="tf-timer-bar">
-                          <div className={`tf-timer-fill ${tfTimeLeft <= 3 ? 'urgent' : ''}`} style={{ width: `${(tfTimeLeft / 10) * 100}%` }}></div>
-                        </div>
-                        <div className={`tf-time-label ${tfTimeLeft <= 3 ? 'urgent' : ''}`}>⏱ {tfTimeLeft}s</div>
-                      </div>
-                      <div className="tf-question-box">
-                        <div className="tf-question">{TF_QUESTIONS[tfIndex].statement}</div>
-                      </div>
-                      {tfAnswered === null ? (
-                        <div className="tf-buttons">
-                          <button className="tf-btn tf-true" onClick={() => handleTfAnswer(true)}>✅ ĐÚNG</button>
-                          <button className="tf-btn tf-false" onClick={() => handleTfAnswer(false)}>❌ SAI</button>
-                        </div>
-                      ) : (
-                        <div className="tf-result">
-                          <div className={`tf-result-badge ${tfAnswered === 'timeout' ? 'timeout' : tfAnswered === TF_QUESTIONS[tfIndex].answer ? 'correct' : 'incorrect'}`}>
-                            {tfAnswered === 'timeout' ? '⏰ Hết giờ!' : tfAnswered === TF_QUESTIONS[tfIndex].answer ? '✅ Chính xác!' : '❌ Chưa đúng'}
-                          </div>
-                          <div className="tf-explain">{TF_QUESTIONS[tfIndex].explain}</div>
-                          <button className="control-btn primary-btn" onClick={handleTfNext} style={{ marginTop: '14px' }}>
-                            {tfIndex >= TF_QUESTIONS.length - 1 ? 'Xem kết quả' : 'Tiếp theo'} <ArrowRight size={16} />
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {tfGameStatus === 'done' && (
-                    <div style={{ textAlign: 'center', padding: '24px 10px' }}>
-                      <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#b10f1d', marginBottom: '10px' }}>Kết quả</h3>
-                      <div style={{ fontSize: '2.8rem', fontWeight: '900', margin: '10px 0', color: tfScore >= 80 ? '#10b981' : tfScore >= 50 ? '#f59e0b' : '#ef4444' }}>
-                        {tfScore} điểm
-                      </div>
-                      <p style={{ color: '#6f3d42', marginBottom: '22px' }}>
-                        {tfScore >= 80 ? '🏆 Xuất sắc! Nắm vững Chương 3!' : tfScore >= 50 ? '👍 Khá tốt! Ôn lại một số khái niệm nhé.' : '📚 Hãy xem lại các slide lý thuyết nhé!'}
-                      </p>
-                      <button className="control-btn primary-btn" onClick={resetTfGame}><RotateCcw size={16} /> Chơi lại</button>
-                    </div>
-                  )}
-                </div>
-              )}
-
+                  </div>
+                )}
+              </div>
             </div>
           </>
         );
-      }
 
       default:
         return <div>Slide không tìm thấy</div>;
