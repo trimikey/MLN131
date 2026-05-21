@@ -540,6 +540,11 @@ Nội dung slide hiện tại sinh viên đang xem:
   return (
     <div className="presentation-container">
       <div className="vietnam-flag-silk" aria-hidden="true"></div>
+      <div className="floating-stars" aria-hidden="true">
+        {Array.from({ length: 16 }).map((_, index) => (
+          <span key={index} className="floating-star"></span>
+        ))}
+      </div>
       {/* Fixed background ambient lights */}
       <div className="ambient-glow-1"></div>
       <div className="ambient-glow-2"></div>

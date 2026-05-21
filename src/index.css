@@ -5,25 +5,25 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   
   /* Color Palette - fresh red glass academic theme */
-  --bg-dark: #fff8f8;
-  --bg-card: rgba(255, 255, 255, 0.34);
-  --bg-card-hover: rgba(255, 255, 255, 0.48);
+  --bg-dark: #5c0008;
+  --bg-card: rgba(255, 246, 247, 0.42);
+  --bg-card-hover: rgba(255, 255, 255, 0.62);
   --border-color: rgba(255, 255, 255, 0.42);
   --border-hover: rgba(225, 29, 72, 0.34);
   
-  --primary: #c1121f;
-  --primary-light: #ef233c;
-  --primary-gradient: linear-gradient(135deg, #ef233c 0%, #ff6b35 100%);
+  --primary: #b40016;
+  --primary-light: #ff1f3d;
+  --primary-gradient: linear-gradient(135deg, #8f0012 0%, #ff1f3d 48%, #ffb000 100%);
   --secondary-gradient: linear-gradient(135deg, #0f766e 0%, #2563eb 100%);
-  --accent: #b45309;
+  --accent: #d97706;
   
-  --text-primary: #241113;
-  --text-secondary: #6f3d42;
-  --text-muted: #9b7478;
+  --text-primary: #17080a;
+  --text-secondary: #3f1c20;
+  --text-muted: #684044;
   
-  --shadow-sm: 0 2px 10px rgba(193, 18, 31, 0.08);
-  --shadow-md: 0 16px 36px rgba(120, 18, 28, 0.12);
-  --shadow-lg: 0 26px 70px rgba(120, 18, 28, 0.14);
+  --shadow-sm: 0 8px 22px rgba(92, 0, 8, 0.16);
+  --shadow-md: 0 18px 44px rgba(92, 0, 8, 0.24);
+  --shadow-lg: 0 30px 82px rgba(92, 0, 8, 0.34);
   
   --glass-blur: blur(26px) saturate(1.55);
   --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -40,6 +40,8 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-dark);
   color: var(--text-primary);
+  font-size: 17px;
+  line-height: 1.58;
   overflow: hidden;
   height: 100vh;
   width: 100vw;
