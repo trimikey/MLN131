@@ -10,8 +10,6 @@ import {
   Layers, 
   ArrowRight, 
   Quote as QuoteIcon, 
-  HelpCircle, 
-  MessageSquare,
   Sparkles,
   Info,
   Lightbulb,
@@ -42,7 +40,9 @@ function App() {
 
   // AI Assistant States
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [apiKey, setApiKey] = useState(() => {
+    return localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+  });
   const [tempApiKey, setTempApiKey] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
@@ -264,7 +264,7 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
     }));
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
