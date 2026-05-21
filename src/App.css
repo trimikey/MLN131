@@ -1677,7 +1677,7 @@ body {
   box-shadow: 0 14px 42px rgba(92, 0, 8, 0.22);
 }
 
-..header-left {
+.header-left {
   min-width: 260px;
 }
 
