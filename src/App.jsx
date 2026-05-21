@@ -78,11 +78,10 @@ function App() {
 
   // AI Assistant States
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [tempApiKey, setTempApiKey] = useState('');
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || '';
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
-    { role: 'model', text: 'Xin chào! Tôi là Trợ lý AI học tập chuyên về môn Chủ nghĩa xã hội khoa học. Hãy nhập API Key của bạn để tôi có thể hỗ trợ giải thích slide, tìm ví dụ thực tế hay đưa ra câu hỏi phản biện nhé.' }
+    { role: 'model', text: 'Xin chào! Tôi là Trợ lý AI học tập chuyên về môn Chủ nghĩa xã hội khoa học. Hãy đặt câu hỏi hoặc click vào một trong những gợi ý nhanh bên dưới nhé!' }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
@@ -120,6 +119,28 @@ function App() {
       container.appendChild(piece);
       setTimeout(() => piece.remove(), (delay + duration + 0.3) * 1000);
     }
+  }, []);
+
+  // ── Personal Progress (localStorage) ─────────────────────────────────────
+  const [viewedSlides, setViewedSlides] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mln131_viewed');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
+  const [bestScores, setBestScores] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mln131_best');
+      return saved ? JSON.parse(saved) : { quiz: 0, tf: 0, matchDone: false };
+    } catch { return { quiz: 0, tf: 0, matchDone: false }; }
+  });
+
+  const saveProgress = useCallback((updates) => {
+    setBestScores(prev => {
+      const updated = { ...prev, ...updates };
+      localStorage.setItem('mln131_best', JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   // ── Game Hub ──────────────────────────────────────────────────────────────
@@ -288,6 +309,26 @@ function App() {
     }
   }, [chatMessages, isAiLoading]);
 
+  // Track viewed slides
+  useEffect(() => {
+    setViewedSlides(prev => {
+      const updated = new Set(prev);
+      updated.add(activeSection);
+      localStorage.setItem('mln131_viewed', JSON.stringify([...updated]));
+      return updated;
+    });
+  }, [activeSection]);
+
+  // Save best quiz score
+  useEffect(() => {
+    if (quizStep === 4) saveProgress({ quiz: Math.max(bestScores.quiz, quizScore) });
+  }, [quizStep]);
+
+  // Save best TF score
+  useEffect(() => {
+    if (tfGameStatus === 'done') saveProgress({ tf: Math.max(bestScores.tf, tfScore) });
+  }, [tfGameStatus]);
+
   // TF countdown timer
   useEffect(() => {
     if (tfGameStatus !== 'playing' || tfAnswered !== null) return;
@@ -351,6 +392,7 @@ function App() {
       setMatchLeft(null);
       setMatchWrong(false);
       if (newPairs.length === MATCHING_PAIRS.length) {
+        saveProgress({ matchDone: true });
         addToast('🎉 Hoàn thành tất cả cặp ghép!', 'success');
         setTimeout(triggerConfetti, 300);
       } else {
@@ -402,29 +444,6 @@ function App() {
 
   const resetTfGame = () => { setTfIndex(0); setTfScore(0); setTfStreak(0); setTfTimeLeft(10); setTfAnswered(null); setTfGameStatus('idle'); };
 
-  // Save API key
-  const handleSaveApiKey = () => {
-    if (tempApiKey.trim()) {
-      localStorage.setItem('gemini_api_key', tempApiKey.trim());
-      setApiKey(tempApiKey.trim());
-      setChatMessages(prev => [
-        ...prev,
-        { role: 'model', text: 'Lưu API Key thành công! Tôi đã sẵn sàng kết nối. Hãy đặt câu hỏi hoặc click vào một trong những gợi ý nhanh bên dưới.' }
-      ]);
-    }
-  };
-
-  // Clear API key
-  const handleClearApiKey = () => {
-    localStorage.removeItem('gemini_api_key');
-    setApiKey('');
-    setTempApiKey('');
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'model', text: 'Đã xóa API Key. Vui lòng nhập API Key mới để có thể tiếp tục sử dụng trợ lý AI.' }
-    ]);
-  };
-
   // AI Context Provider based on Slide Number
   const getActiveSlideContext = (num) => {
     switch (num) {
@@ -442,7 +461,7 @@ function App() {
     }
   };
 
-  // Send message to Gemini API
+  // Send message to Groq API
   const sendChatMessage = async (textToSend) => {
     const promptText = textToSend || chatInput;
     if (!promptText.trim() || !apiKey) return;
@@ -453,42 +472,58 @@ function App() {
     setIsAiLoading(true);
 
     const activeSlideText = getActiveSlideContext(activeSection);
-    const systemPrompt = `Bạn là một giáo sư giảng dạy môn Chủ nghĩa xã hội khoa học tại Việt Nam.
-Hãy trả lời câu hỏi của sinh viên một cách ngắn gọn, dễ hiểu, học thuật nhưng thực tế và dễ hình dung.
-Khi trả lời hãy liên hệ với thực tiễn Việt Nam hoặc ví dụ lịch sử nếu phù hợp.
-Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang học:
+    const systemPrompt = `Bạn là trợ lý học tập chuyên biệt cho môn Chủ nghĩa xã hội khoa học, Chương 3: "Chủ nghĩa xã hội và thời kỳ quá độ lên chủ nghĩa xã hội".
+
+PHẠM VI TRẢ LỜI: Chỉ trả lời các câu hỏi liên quan đến nội dung Chương 3, bao gồm:
+- Các góc độ tiếp cận CNXH (phong trào thực tiễn, trào lưu tư tưởng, khoa học, chế độ xã hội)
+- Học thuyết hình thái kinh tế - xã hội (Mác, Ăngghen, Lênin)
+- Tính tất yếu của sự thay thế TBCN bằng CSCN
+- Hai giai đoạn của hình thái KT-XH cộng sản (CNXH và CNCS)
+- Thời kỳ quá độ và hai nghĩa (gián tiếp / trực tiếp)
+- Thực tiễn Việt Nam đi lên CNXH
+
+NẾU câu hỏi nằm ngoài phạm vi trên, hãy lịch sự từ chối và nhắc sinh viên quay lại nội dung Chương 3.
+
+CÁCH TRẢ LỜI: Ngắn gọn, dễ hiểu, học thuật nhưng thực tế. Ưu tiên liên hệ thực tiễn Việt Nam.
+
+Nội dung slide hiện tại sinh viên đang xem:
 "${activeSlideText}"`;
 
-    // Map history to Gemini format: [{ role: 'user'|'model', parts: [{ text: '...' }] }]
-    const historyPayload = [
-      ...chatMessages.filter(m => m.role === 'user' || m.role === 'model'),
-      userMessage
-    ].map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.text }]
-    }));
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...chatMessages
+        .filter(m => m.role === 'user' || m.role === 'model')
+        .map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
+      { role: 'user', content: promptText },
+    ];
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          contents: historyPayload,
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          }
+          model: 'llama-3.3-70b-versatile',
+          messages,
+          max_tokens: 1024,
         })
       });
 
       const data = await response.json();
-      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi. Vui lòng kiểm tra lại API Key hoặc cài đặt mạng.";
-      
+
+      if (!response.ok) {
+        const errMsg = data.error?.message || `Lỗi ${response.status}`;
+        setChatMessages(prev => [...prev, { role: 'model', text: `⚠️ API lỗi: ${errMsg}` }]);
+        return;
+      }
+
+      const aiResponse = data.choices?.[0]?.message?.content || "Không nhận được phản hồi từ AI.";
       setChatMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
     } catch (err) {
       console.error(err);
-      setChatMessages(prev => [...prev, { role: 'model', text: "Lỗi kết nối. Không thể liên lạc được với API Google Gemini. Vui lòng thử lại sau." }]);
+      setChatMessages(prev => [...prev, { role: 'model', text: "Lỗi kết nối mạng. Không thể liên lạc với Groq API." }]);
     } finally {
       setIsAiLoading(false);
     }
@@ -608,45 +643,6 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
         </div>
 
         <div className="chat-body">
-          {/* API Key Setup block if not loaded */}
-          {!apiKey ? (
-            <div className="api-key-setup">
-              <h4>🔑 Cần cấu hình API Key</h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', lineHeight: '1.4' }}>
-                Để bảo mật và tránh tốn phí cho người phát triển, vui lòng lấy API Key Gemini miễn phí của bạn tại{' '}
-                <a 
-                  href="https://aistudio.google.com/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--accent)', textDecoration: 'underline' }}
-                >
-                  Google AI Studio
-                </a>{' '}
-                và dán vào đây:
-              </p>
-              <div className="api-key-input-group">
-                <input 
-                  type="password" 
-                  placeholder="Dán AI API Key của bạn..." 
-                  className="api-key-input"
-                  value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
-                />
-                <button className="api-key-save-btn" onClick={handleSaveApiKey}>Lưu</button>
-              </div>
-            </div>
-          ) : (
-            <div className="api-key-setup" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#10b981', fontWeight: '600', fontSize: '0.75rem' }}>✓ Đã kết nối API Gemini</span>
-              <button 
-                onClick={handleClearApiKey}
-                style={{ background: 'transparent', border: 'none', color: '#ef4444', textDecoration: 'underline', fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                Xóa Key
-              </button>
-            </div>
-          )}
-
           {/* Chat Messages */}
           <div className="chat-message-list">
             {chatMessages.map((msg, idx) => (
@@ -666,28 +662,32 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
           </div>
 
           {/* Quick suggestions depending on active slide context */}
-          {apiKey && (
-            <div className="quick-prompts">
-              <button 
-                className="quick-prompt-btn" 
-                onClick={() => sendChatMessage("Hãy giải thích sâu hơn và đưa ra ý nghĩa cốt lõi của nội dung ở slide hiện tại.")}
-              >
-                💡 Giải thích slide này
-              </button>
-              <button 
-                className="quick-prompt-btn" 
-                onClick={() => sendChatMessage("Hãy đưa ra một câu hỏi phản biện hoặc thảo luận hay cho cả lớp về nội dung slide này.")}
-              >
-                ❓ Đặt câu hỏi thảo luận
-              </button>
-              <button 
-                className="quick-prompt-btn" 
-                onClick={() => sendChatMessage("Hãy đưa ra một ví dụ thực tế cụ thể ở Việt Nam liên quan đến nội dung này.")}
-              >
-                📝 Ví dụ thực tế VN
-              </button>
-            </div>
-          )}
+          <div className="quick-prompts">
+            <button
+              className="quick-prompt-btn"
+              onClick={() => sendChatMessage("Hãy giải thích sâu hơn và đưa ra ý nghĩa cốt lõi của nội dung ở slide hiện tại.")}
+            >
+              💡 Giải thích slide này
+            </button>
+            <button
+              className="quick-prompt-btn"
+              onClick={() => sendChatMessage("Hãy đưa ra một câu hỏi phản biện hoặc thảo luận hay cho cả lớp về nội dung slide này.")}
+            >
+              ❓ Đặt câu hỏi thảo luận
+            </button>
+            <button
+              className="quick-prompt-btn"
+              onClick={() => sendChatMessage("Hãy đưa ra một ví dụ thực tế cụ thể ở Việt Nam liên quan đến nội dung này.")}
+            >
+              📝 Ví dụ thực tế VN
+            </button>
+            <button
+              className="quick-prompt-btn quick-prompt-btn--challenge"
+              onClick={() => sendChatMessage("Hãy đố tôi 1 câu hỏi trắc nghiệm ngẫu nhiên về nội dung Chương 3. Viết câu hỏi rõ ràng rồi liệt kê 4 đáp án A, B, C, D. KHÔNG tiết lộ đáp án đúng — hãy đợi tôi trả lời trước rồi mới chấm và giải thích.")}
+            >
+              🎲 Đố tôi 1 câu
+            </button>
+          </div>
         </div>
 
         {/* Chat input footer */}
@@ -701,16 +701,16 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
           >
             <input 
               type="text" 
-              placeholder={apiKey ? "Nhập câu hỏi triết học..." : "Vui lòng nhập API Key..."} 
+              placeholder="Nhập câu hỏi triết học..."
               className="chat-text-input"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              disabled={!apiKey || isAiLoading}
+              disabled={isAiLoading}
             />
             <button 
               type="submit" 
               className="chat-send-btn"
-              disabled={!apiKey || !chatInput.trim() || isAiLoading}
+              disabled={!chatInput.trim() || isAiLoading}
             >
               <Send size={14} />
             </button>
@@ -724,7 +724,7 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
           {navItems.map(item => (
             <button
               key={item.num}
-              className={`minimap-dot-btn ${activeSection === item.num ? 'active' : activeSection > item.num ? 'done' : ''}`}
+              className={`minimap-dot-btn ${activeSection === item.num ? 'active' : viewedSlides.has(item.num) ? 'done' : ''}`}
               onClick={() => scrollToSection(item.num)}
               title={item.label}
             >
@@ -736,13 +736,48 @@ Dưới đây là nội dung bối cảnh slide hiện tại học sinh đang h�
           {navItems.map(item => (
             <button
               key={item.num}
-              className={`minimap-label-item ${activeSection === item.num ? 'active' : activeSection > item.num ? 'done' : ''}`}
+              className={`minimap-label-item ${activeSection === item.num ? 'active' : viewedSlides.has(item.num) ? 'done' : ''}`}
               onClick={() => scrollToSection(item.num)}
             >
               <span className="minimap-label-num">{item.num}</span>
               <span className="minimap-label-text">{item.label}</span>
             </button>
           ))}
+
+          {/* Progress summary — bên trong panel hover */}
+          <div className="progress-summary">
+            <div className="progress-summary-title">Tiến độ của bạn</div>
+            <div className="progress-summary-row">
+              <span>📖 Slide đã xem</span>
+              <span className="progress-val">{viewedSlides.size}/{totalSlides}</span>
+            </div>
+            <div className="progress-bar-wrap">
+              <div className="progress-bar-fill" style={{ width: `${(viewedSlides.size / totalSlides) * 100}%` }} />
+            </div>
+            <div className="progress-summary-row">
+              <span>📝 Quiz</span>
+              <span className="progress-val">{bestScores.quiz}/3</span>
+            </div>
+            <div className="progress-summary-row">
+              <span>⚡ Đúng/Sai</span>
+              <span className="progress-val">{bestScores.tf} đ</span>
+            </div>
+            <div className="progress-summary-row">
+              <span>🔗 Ghép đôi</span>
+              <span className="progress-val">{bestScores.matchDone ? '✅' : '—'}</span>
+            </div>
+            <button
+              className="progress-reset-btn"
+              onClick={() => {
+                localStorage.removeItem('mln131_viewed');
+                localStorage.removeItem('mln131_best');
+                setViewedSlides(new Set());
+                setBestScores({ quiz: 0, tf: 0, matchDone: false });
+              }}
+            >
+              Đặt lại
+            </button>
+          </div>
         </div>
       </div>
 
